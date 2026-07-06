@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAMANDTECH - Gestor de Riesgo Ponderado</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121214;
+            color: #e1e1e6;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            background-color: #1d1d22;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            max-width: 500px;
+            width: 100%;
+        }
+        h2 { text-align: center; color: #00b37e; margin-top: 0; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #a9a9b2; }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #29292e;
+            background-color: #121214;
+            color: #fff;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        input:focus { border-color: #00b37e; outline: none; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        hr { border: 0; height: 1px; background: #29292e; margin: 20px 0; }
+        .btn {
+            background-color: #00b37e;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .btn:hover { background-color: #008f64; }
+        .result-box {
+            background-color: #29292e;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+        .result-item:last-child { margin-bottom: 0; }
+        .highlight { font-weight: bold; color: #fba94c; }
+        .danger { color: #f75a68; font-weight: bold; font-size: 18px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Gestor de Riesgo Nexus</h2>
+    
+    <div class="input-group">
+        <label>Dirección del Trade</label>
+        <select id="tipoTrade">
+            <option value="SHORT">SHORT (Venta)</option>
+            <option value="LONG">LONG (Compra)</option>
+        </select>
+    </div>
+
+    <div class="input-group">
+        <label>Apalancamiento (X)</label>
+        <input type="number" id="leverage" value="20" min="1">
+    </div>
+
+    <hr>
+    <!-- Entrada 1 -->
+    <div class="row">
+        <div class="input-group">
+            <label>Precio Entrada 1</label>
+            <input type="number" id="p1" placeholder="Ej: 63500">
+        </div>
+        <div class="input-group">
+            <label>Margen 1 ($ USD)</label>
+            <input type="number" id="m1" placeholder="Ej: 50">
+        </div>
+    </div>
+
+    <!-- Entrada 2 -->
+    <div class="row">
+        <div class="input-group">
+            <label>Precio Entrada 2</label>
+            <input type="number" id="p2" placeholder="Opcional">
+        </div>
+        <div class="input-group">
+            <label>Margen 2 ($ USD)</label>
+            <input type="number" id="m2" placeholder="Opcional">
+        </div>
+    </div>
+
+    <!-- Entrada 3 -->
+    <div class="row">
+        <div class="input-group">
+            <label>Precio Entrada 3</label>
+            <input type="number" id="p3" placeholder="Opcional">
+        </div>
+        <div class="input-group">
+            <label>Margen 3 ($ USD)</label>
+            <input type="number" id="m3" placeholder="Opcional">
+        </div>
+    </div>
+
+    <hr>
+    <div class="input-group">
+        <label>Precio Stop Loss (SL)</label>
+        <input type="number" id="sl" placeholder="Ej: 64063">
+    </div>
+
+    <button class="btn" onclick="calcularRiesgo()">Calcular Métricas</button>
+
+    <div class="result-box">
+        <div class="result-item">
+            <span>Margen Total Invertido:</span>
+            <span id="resMargen" class="highlight">$0.00</span>
+        </div>
+        <div class="result-item">
+            <span>Tamaño Posición (Con Apalancamiento):</span>
+            <span id="resTamaño" class="highlight">$0.00</span>
+        </div>
+        <div class="result-item">
+            <span>Precio Promedio Ponderado:</span>
+            <span id="resPromedio" class="highlight">$0.00</span>
+        </div>
+        <hr style="margin: 10px 0;">
+        <div class="result-item">
+            <span>PÉRDIDA ESTIMADA TOTAL:</span>
+            <span id="resPerdida" class="danger">$0.00</span>
+        </div>
+    </div>
+</div>
+
+<script>
+function calcularRiesgo() {
+    const lev = parseFloat(document.getElementById('leverage').value) || 1;
+    const sl = parseFloat(document.getElementById('sl').value) || 0;
+    const tipo = document.getElementById('tipoTrade').value;
+
+    let totalMargen = 0;
+    let totalContratosBTC = 0;
+
+    // Procesar las 3 entradas posibles
+    for (let i = 1; i <= 3; i++) {
+        const precio = parseFloat(document.getElementById(`p${i}`).value);
+        const margen = parseFloat(document.getElementById(`m${i}`).value);
+
+        if (precio > 0 && margen > 0) {
+            totalMargen += margen;
+            const tamanoFila = margen * lev;
+            totalContratosBTC += (tamanoFila / precio);
+        }
+    }
+
+    if (totalMargen === 0 || sl === 0) {
+        alert("Por favor introduce al menos una Entrada (Precio y Margen) y el Stop Loss.");
+        return;
+    }
+
+    // Cálculos finales basados en microestructura
+    const tamanoTotalPosicion = totalMargen * lev;
+    const precioPromedioPonderado = tamanoTotalPosicion / totalContratosBTC;
+
+    // Calcular pérdida exacta según dirección
+    let perdidaUSD = 0;
+    if (tipo === "SHORT") {
+        perdidaUSD = (sl - precioPromedioPonderado) * totalContratosBTC;
+    } else {
+        perdidaUSD = (precioPromedioPonderado - sl) * totalContratosBTC;
+    }
+
+    // Renderizar resultados en pantalla
+    document.getElementById('resMargen').innerText = `$${totalMargen.toFixed(2)}`;
+    document.getElementById('resTamaño').innerText = `$${tamanoTotalPosicion.toFixed(2)}`;
+    document.getElementById('resPromedio').innerText = `$${precioPromedioPonderado.toFixed(2)}`;
+    document.getElementById('resPerdida').innerText = `$${perdidaUSD.toFixed(2)} USD`;
+}
+</script>
+
+</body>
+</html>
