@@ -3,97 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAMANDTECH - Gestor de Riesgo Ponderado</title>
+    <title>SAMANDTECH - Gestor de Riesgo Ponderado Avanzado</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #121214;
+            background-color: #0b0b0d;
             color: #e1e1e6;
             padding: 20px;
             display: flex;
             justify-content: center;
         }
         .container {
-            background-color: #1d1d22;
+            background-color: #121216;
             padding: 30px;
             border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-            max-width: 500px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+            border: 1px solid #1f1f27;
+            max-width: 550px;
             width: 100%;
         }
-        h2 { text-align: center; color: #00b37e; margin-top: 0; }
+        h2 { text-align: center; color: #00b37e; margin-top: 0; letter-spacing: 1px; }
+        .subtitle { text-align: center; font-size: 12px; color: #7c7c8a; margin-top: -10px; margin-bottom: 20px; font-weight: bold; }
         .input-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: #a9a9b2; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #a9a9b2; font-size: 14px; }
         input, select {
             width: 100%;
             padding: 10px;
-            border: 1px solid #29292e;
-            background-color: #121214;
+            border: 1px solid #292930;
+            background-color: #1c1c22;
             color: #fff;
             border-radius: 6px;
             box-sizing: border-box;
-            font-size: 16px;
+            font-size: 15px;
         }
-        input:focus { border-color: #00b37e; outline: none; }
+        input:focus { border-color: #00b37e; outline: none; box-shadow: 0 0 5px rgba(0, 179, 126, 0.3); }
         .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        hr { border: 0; height: 1px; background: #29292e; margin: 20px 0; }
+        hr { border: 0; height: 1px; background: #292930; margin: 20px 0; }
         .btn {
             background-color: #00b37e;
             color: white;
-            padding: 12px;
+            padding: 14px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
             width: 100%;
             font-size: 16px;
             font-weight: bold;
+            transition: background 0.2s;
         }
         .btn:hover { background-color: #008f64; }
         .result-box {
-            background-color: #29292e;
-            padding: 15px;
+            background-color: #1c1c22;
+            padding: 20px;
             border-radius: 6px;
             margin-top: 20px;
+            border: 1px solid #292930;
         }
         .result-item {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             font-size: 15px;
         }
         .result-item:last-child { margin-bottom: 0; }
         .highlight { font-weight: bold; color: #fba94c; }
-        .danger { color: #f75a68; font-weight: bold; font-size: 18px; }
+        .danger { color: #f75a68; font-weight: bold; font-size: 16px; }
+        .liq-box { color: #ff4747; font-weight: bold; font-size: 18px; text-shadow: 0 0 5px rgba(255,71,71,0.2); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Gestor de Riesgo Nexus</h2>
+    <h2>SAMANDTECH . NOC</h2>
+    <div class="subtitle">GESTOR DE RIESGO Y LIQUIDACIÓN EN AISLADO</div>
     
-    <div class="input-group">
-        <label>Dirección del Trade</label>
-        <select id="tipoTrade">
-            <option value="SHORT">SHORT (Venta)</option>
-            <option value="LONG">LONG (Compra)</option>
-        </select>
+    <div class="row">
+        <div class="input-group">
+            <label>Dirección del Trade</label>
+            <select id="tipoTrade">
+                <option value="LONG">LONG (Compra)</option>
+                <option value="SHORT">SHORT (Venta)</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label>Apalancamiento (X)</label>
+            <input type="number" id="leverage" value="100" min="1">
+        </div>
     </div>
 
-    <div class="input-group">
-        <label>Apalancamiento (X)</label>
-        <input type="number" id="leverage" value="20" min="1">
-    </div>
-
-    <hr>
+    <hr style="margin: 10px 0;">
+    
     <!-- Entrada 1 -->
     <div class="row">
         <div class="input-group">
             <label>Precio Entrada 1</label>
-            <input type="number" id="p1" placeholder="Ej: 63500">
+            <input type="number" id="p1" placeholder="Ej: 62331.5">
         </div>
         <div class="input-group">
-            <label>Margen 1 ($ USD)</label>
-            <input type="number" id="m1" placeholder="Ej: 50">
+            <label>Margen Asignado 1 ($)</label>
+            <input type="number" id="m1" placeholder="Ej: 10">
         </div>
     </div>
 
@@ -101,51 +109,68 @@
     <div class="row">
         <div class="input-group">
             <label>Precio Entrada 2</label>
-            <input type="number" id="p2" placeholder="Opcional">
+            <input type="number" id="p2" placeholder="Ej: 62180 (Retesteo)">
         </div>
         <div class="input-group">
-            <label>Margen 2 ($ USD)</label>
-            <input type="number" id="m2" placeholder="Opcional">
+            <label>Margen Asignado 2 ($)</label>
+            <input type="number" id="m2" placeholder="Ej: 10">
         </div>
     </div>
 
-    <!-- Entrada 3 -->
+    <!-- Entrada 3 (Opcional o inyección limpia de colateral) -->
     <div class="row">
         <div class="input-group">
             <label>Precio Entrada 3</label>
             <input type="number" id="p3" placeholder="Opcional">
         </div>
         <div class="input-group">
-            <label>Margen 3 ($ USD)</label>
+            <label>Margen Asignado 3 ($)</label>
             <input type="number" id="m3" placeholder="Opcional">
         </div>
+    </div>
+
+    <div class="input-group">
+        <label>Inyección de Margen Extra Directo (Botón +) ($)</label>
+        <input type="number" id="margenExtra" value="0" min="0" placeholder="Ej: 3 (Sin comprar contratos)">
     </div>
 
     <hr>
     <div class="input-group">
         <label>Precio Stop Loss (SL)</label>
-        <input type="number" id="sl" placeholder="Ej: 64063">
+        <input type="number" id="sl" placeholder="Ej: 61950">
     </div>
 
-    <button class="btn" onclick="calcularRiesgo()">Calcular Métricas</button>
+    <button class="btn" onclick="calcularRiesgo()">Calcular Métricas y Liquidación</button>
 
     <div class="result-box">
         <div class="result-item">
-            <span>Margen Total Invertido:</span>
+            <span>Margen Inicial Acumulado:</span>
             <span id="resMargen" class="highlight">$0.00</span>
         </div>
         <div class="result-item">
-            <span>Tamaño Posición (Con Apalancamiento):</span>
+            <span>Margen Extra de Respaldo:</span>
+            <span id="resExtra" class="highlight">$0.00</span>
+        </div>
+        <div class="result-item">
+            <span>Tamaño Posición (Valor Nominal):</span>
             <span id="resTamaño" class="highlight">$0.00</span>
         </div>
         <div class="result-item">
-            <span>Precio Promedio Ponderado:</span>
+            <span>Precio Entrada Promedio:</span>
             <span id="resPromedio" class="highlight">$0.00</span>
         </div>
-        <hr style="margin: 10px 0;">
+        <hr style="margin: 10px 0; border-color: #292930;">
         <div class="result-item">
-            <span>PÉRDIDA ESTIMADA TOTAL:</span>
-            <span id="resPerdida" class="danger">$0.00</span>
+            <span>PRECIO DE LIQUIDACIÓN APROX (Aislado):</span>
+            <span id="resLiq" class="liq-box">$0.00</span>
+        </div>
+        <div class="result-item">
+            <span>PÉRDIDA EN STOP LOSS:</span>
+            <span id="resPerdida" class="danger">$0.00 USD</span>
+        </div>
+        <div class="result-item">
+            <span>Riesgo sobre capital retenido:</span>
+            <span id="resPorcentaje" class="danger">0.00%</span>
         </div>
     </div>
 </div>
@@ -155,44 +180,78 @@ function calcularRiesgo() {
     const lev = parseFloat(document.getElementById('leverage').value) || 1;
     const sl = parseFloat(document.getElementById('sl').value) || 0;
     const tipo = document.getElementById('tipoTrade').value;
+    const extraMargen = parseFloat(document.getElementById('margenExtra').value) || 0;
 
-    let totalMargen = 0;
+    let totalMargenInicial = 0;
     let totalContratosBTC = 0;
+    let valorNominalUSDT = 0;
 
-    // Procesar las 3 entradas posibles
+    // Procesar las 3 entradas
     for (let i = 1; i <= 3; i++) {
         const precio = parseFloat(document.getElementById(`p${i}`).value);
         const margen = parseFloat(document.getElementById(`m${i}`).value);
 
         if (precio > 0 && margen > 0) {
-            totalMargen += margen;
-            const tamanoFila = margen * lev;
-            totalContratosBTC += (tamanoFila / precio);
+            totalMargenInicial += margen;
+            // El valor nominal en USDT que te presta el exchange para esa sub-entrada
+            const valorFila = margen * lev;
+            valorNominalUSDT += valorFila;
+            // Cantidad real de contratos en BTC comprados
+            totalContratosBTC += (valorFila / precio);
         }
     }
 
-    if (totalMargen === 0 || sl === 0) {
-        alert("Por favor introduce al menos una Entrada (Precio y Margen) y el Stop Loss.");
+    if (totalMargenInicial === 0) {
+        alert("Por favor introduce al menos el precio y margen de la primera Entrada.");
         return;
     }
 
-    // Cálculos finales basados en microestructura
-    const tamanoTotalPosicion = totalMargen * lev;
-    const precioPromedioPonderado = tamanoTotalPosicion / totalContratosBTC;
+    // 1. Calcular el Precio de Entrada Promedio exacto
+    const precioPromedioPonderado = valorNominalUSDT / totalContratosBTC;
 
-    // Calcular pérdida exacta según dirección
-    let perdidaUSD = 0;
-    if (tipo === "SHORT") {
-        perdidaUSD = (sl - precioPromedioPonderado) * totalContratosBTC;
+    // 2. Margen total real depositado en la posición (Margen inicial + Inyecciones del botón +)
+    const margenTotalEnPosicion = totalMargenInicial + extraMargen;
+
+    // 3. Cálculo de Liquidación Aislada aproximada para BTC (Tasa de Margen de Mantenimiento ~ 0.4%)
+    // Formula estándar: Liq (Long) = Entrada * (1 - (MargenTotal / ValorNominal) + MM)
+    const tasaMM = 0.004; 
+    let precioLiquidacion = 0;
+
+    if (tipo === "LONG") {
+        precioLiquidacion = precioPromedioPonderado * (1 - (margenTotalEnPosicion / valorNominalUSDT) + tasaMM);
     } else {
-        perdidaUSD = (precioPromedioPonderado - sl) * totalContratosBTC;
+        precioLiquidacion = precioPromedioPonderado * (1 + (margenTotalEnPosicion / valorNominalUSDT) - tasaMM);
+    }
+
+    // Evitar valores negativos incoherentes
+    if(precioLiquidacion < 0) precioLiquidacion = 0;
+
+    // 4. Calcular Pérdida en el Stop Loss si está configurado
+    let perdidaUSD = 0;
+    let porcentajeRiesgo = 0;
+    if (sl > 0) {
+        if (tipo === "SHORT") {
+            perdidaUSD = (sl - precioPromedioPonderado) * totalContratosBTC;
+        } else {
+            perdidaUSD = (precioPromedioPonderado - sl) * totalContratosBTC;
+        }
+        porcentajeRiesgo = (perdidaUSD / margenTotalEnPosicion) * 100;
     }
 
     // Renderizar resultados en pantalla
-    document.getElementById('resMargen').innerText = `$${totalMargen.toFixed(2)}`;
-    document.getElementById('resTamaño').innerText = `$${tamanoTotalPosicion.toFixed(2)}`;
+    document.getElementById('resMargen').innerText = `$${totalMargenInicial.toFixed(2)}`;
+    document.getElementById('resExtra').innerText = `$${extraMargen.toFixed(2)}`;
+    document.getElementById('resTamaño').innerText = `$${valorNominalUSDT.toFixed(2)}`;
     document.getElementById('resPromedio').innerText = `$${precioPromedioPonderado.toFixed(2)}`;
-    document.getElementById('resPerdida').innerText = `$${perdidaUSD.toFixed(2)} USD`;
+    document.getElementById('resLiq').innerText = `$${precioLiquidacion.toFixed(2)}`;
+    
+    if(sl > 0) {
+        document.getElementById('resPerdida').innerText = `$${perdidaUSD.toFixed(2)} USD`;
+        document.getElementById('resPorcentaje').innerText = `${porcentajeRiesgo.toFixed(1)}% del margen`;
+    } else {
+        document.getElementById('resPerdida').innerText = "Sin SL fijado";
+        document.getElementById('resPorcentaje').innerText = "0.00%";
+    }
 }
 </script>
 
