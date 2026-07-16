@@ -67,6 +67,7 @@
         }
         .result-item:last-child { margin-bottom: 0; }
         .highlight { font-weight: bold; color: #fba94c; }
+        .success { color: #00b37e; font-weight: bold; font-size: 16px; }
         .danger { color: #f75a68; font-weight: bold; font-size: 16px; }
         .liq-box { color: #ff4747; font-weight: bold; font-size: 18px; text-shadow: 0 0 5px rgba(255,71,71,0.2); }
     </style>
@@ -117,7 +118,7 @@
         </div>
     </div>
 
-    <!-- Entrada 3 (Opcional o inyección limpia de colateral) -->
+    <!-- Entrada 3 -->
     <div class="row">
         <div class="input-group">
             <label>Precio Entrada 3</label>
@@ -135,9 +136,17 @@
     </div>
 
     <hr>
-    <div class="input-group">
-        <label>Precio Stop Loss (SL)</label>
-        <input type="number" id="sl" placeholder="Ej: 61950">
+    
+    <!-- Gestión de Salidas (SL y TP) -->
+    <div class="row">
+        <div class="input-group">
+            <label>Precio Stop Loss (SL)</label>
+            <input type="number" id="sl" placeholder="Ej: 61950">
+        </div>
+        <div class="input-group">
+            <label>Precio Take Profit (TP)</label>
+            <input type="number" id="tp" placeholder="Ej: 63500">
+        </div>
     </div>
 
     <button class="btn" onclick="calcularRiesgo()">Calcular Métricas y Liquidación</button>
@@ -165,6 +174,15 @@
             <span id="resLiq" class="liq-box">$0.00</span>
         </div>
         <div class="result-item">
+            <span>GANANCIA EN TAKE PROFIT:</span>
+            <span id="resGanancia" class="success">$0.00 USD</span>
+        </div>
+        <div class="result-item">
+            <span>Retorno estimado (ROI):</span>
+            <span id="resPorcentajeGanancia" class="success">0.00%</span>
+        </div>
+        <hr style="margin: 10px 0; border-color: #292930;">
+        <div class="result-item">
             <span>PÉRDIDA EN STOP LOSS:</span>
             <span id="resPerdida" class="danger">$0.00 USD</span>
         </div>
@@ -179,6 +197,7 @@
 function calcularRiesgo() {
     const lev = parseFloat(document.getElementById('leverage').value) || 1;
     const sl = parseFloat(document.getElementById('sl').value) || 0;
+    const tp = parseFloat(document.getElementById('tp').value) || 0;
     const tipo = document.getElementById('tipoTrade').value;
     const extraMargen = parseFloat(document.getElementById('margenExtra').value) || 0;
 
@@ -193,10 +212,8 @@ function calcularRiesgo() {
 
         if (precio > 0 && margen > 0) {
             totalMargenInicial += margen;
-            // El valor nominal en USDT que te presta el exchange para esa sub-entrada
             const valorFila = margen * lev;
             valorNominalUSDT += valorFila;
-            // Cantidad real de contratos en BTC comprados
             totalContratosBTC += (valorFila / precio);
         }
     }
@@ -209,11 +226,10 @@ function calcularRiesgo() {
     // 1. Calcular el Precio de Entrada Promedio exacto
     const precioPromedioPonderado = valorNominalUSDT / totalContratosBTC;
 
-    // 2. Margen total real depositado en la posición (Margen inicial + Inyecciones del botón +)
+    // 2. Margen total real depositado en la posición
     const margenTotalEnPosicion = totalMargenInicial + extraMargen;
 
-    // 3. Cálculo de Liquidación Aislada aproximada para BTC (Tasa de Margen de Mantenimiento ~ 0.4%)
-    // Formula estándar: Liq (Long) = Entrada * (1 - (MargenTotal / ValorNominal) + MM)
+    // 3. Cálculo de Liquidación Aislada aproximada
     const tasaMM = 0.004; 
     let precioLiquidacion = 0;
 
@@ -223,10 +239,21 @@ function calcularRiesgo() {
         precioLiquidacion = precioPromedioPonderado * (1 + (margenTotalEnPosicion / valorNominalUSDT) - tasaMM);
     }
 
-    // Evitar valores negativos incoherentes
     if(precioLiquidacion < 0) precioLiquidacion = 0;
 
-    // 4. Calcular Pérdida en el Stop Loss si está configurado
+    // 4. Calcular Ganancia en Take Profit (TP)
+    let gananciaUSD = 0;
+    let porcentajeGanancia = 0;
+    if (tp > 0) {
+        if (tipo === "LONG") {
+            gananciaUSD = (tp - precioPromedioPonderado) * totalContratosBTC;
+        } else {
+            gananciaUSD = (precioPromedioPonderado - tp) * totalContratosBTC;
+        }
+        porcentajeGanancia = (gananciaUSD / margenTotalEnPosicion) * 100;
+    }
+
+    // 5. Calcular Pérdida en el Stop Loss (SL)
     let perdidaUSD = 0;
     let porcentajeRiesgo = 0;
     if (sl > 0) {
@@ -245,6 +272,16 @@ function calcularRiesgo() {
     document.getElementById('resPromedio').innerText = `$${precioPromedioPonderado.toFixed(2)}`;
     document.getElementById('resLiq').innerText = `$${precioLiquidacion.toFixed(2)}`;
     
+    // Resultados del TP
+    if(tp > 0) {
+        document.getElementById('resGanancia').innerText = `$${gananciaUSD.toFixed(2)} USD`;
+        document.getElementById('resPorcentajeGanancia').innerText = `${porcentajeGanancia.toFixed(1)}% (ROI)`;
+    } else {
+        document.getElementById('resGanancia').innerText = "Sin TP fijado";
+        document.getElementById('resPorcentajeGanancia').innerText = "0.00%";
+    }
+
+    // Resultados del SL
     if(sl > 0) {
         document.getElementById('resPerdida').innerText = `$${perdidaUSD.toFixed(2)} USD`;
         document.getElementById('resPorcentaje').innerText = `${porcentajeRiesgo.toFixed(1)}% del margen`;
